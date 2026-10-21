@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.kaplanhalil.topstats",
   "name": "TopStats",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "Halil Kaplan",
   "license": "MIT",
   "description": "TopHat-style CPU, GPU and RAM meters in the Omarchy bar, with live history and top processes.",
