@@ -64,8 +64,18 @@ Panel {
     settingsMode = false
     if (!opened) controller.show()
     if (sampler) sampler.setPanelOpen(true)
+    syncGpuPanel()
     Qt.callLater(function() { if (keyCatcher) keyCatcher.forceActiveFocus() })
   }
+
+  function syncGpuPanel() {
+    if (!sampler) return
+    sampler.setGpuPanelVisible(opened && !settingsMode && tab === "gpu")
+  }
+
+  onTabChanged: syncGpuPanel()
+  onSettingsModeChanged: syncGpuPanel()
+  onOpenedChanged: syncGpuPanel()
 
   function open() {
     openFor(tab)
@@ -300,6 +310,7 @@ Panel {
               title: "Top processes"
               rows: root.sampler ? root.sampler.topCpu : []
               mode: "cpu"
+              emptyText: "No active processes"
               foreground: root.foreground
               fontFamily: root.fontFamily
             }

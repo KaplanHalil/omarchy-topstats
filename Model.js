@@ -92,17 +92,18 @@ function parseMeminfo(text) {
   }
 }
 
-// /proc/cpuinfo lists the current MHz of every logical CPU. Averaging keeps
-// the number honest on hybrid parts where the P-cores and E-cores differ.
+// /proc/cpuinfo lists the current MHz of every logical CPU. The maximum is
+// more useful than the average on hybrid parts: a single busy P-core at
+// 5.1 GHz would otherwise average down to ~1 GHz across 24 threads.
 function parseCpuFrequency(text) {
   var matches = String(text || "").match(/cpu MHz\s*:\s*([0-9.]+)/g) || []
   if (matches.length === 0) return 0
-  var sum = 0
+  var max = 0
   for (var i = 0; i < matches.length; i++) {
     var value = Number(matches[i].replace(/^[^:]*:\s*/, ""))
-    if (isFinite(value)) sum += value
+    if (isFinite(value) && value > max) max = value
   }
-  return matches.length > 0 ? sum / matches.length : 0
+  return max
 }
 
 function parseCpuModel(text) {

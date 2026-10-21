@@ -95,7 +95,6 @@ BarWidget {
     id: layout
     anchors.centerIn: parent
     columns: root.vertical ? 1 : (root.showGpu && sampler.gpuAvailable ? 3 : 2)
-    rows: root.vertical ? (root.showGpu && sampler.gpuAvailable ? 3 : 2) : 1
     flow: Grid.LeftToRight
     spacing: root.vertical ? Style.space(1) : Style.space(7)
 
@@ -185,5 +184,4 @@ BarWidget {
       panelLoader.item.openFor(root.lastMetric)
       panelLoader.item.settingsMode = true
     }
-  }
-}
+  }}

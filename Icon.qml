@@ -19,13 +19,9 @@ Item {
 
   function pathFor(value) {
     if (value === "gpu") {
-      return "M2 4.5 H14 V10.5 H2 Z "
-        + "M2 10.5 V13 H5.5 V10.5 "
-        + "M9.5 5.25 a2.6 2.6 0 1 0 0.01 0 Z "
-        + "M9.5 7.85 V8.2 "
-        + "M11.5 7.5 H13 "
-        + "M4 6.5 V8.5 "
-        + "M5.5 6.5 V8.5"
+      return "M1.5 4 H14.5 V11 H1.5 Z "
+        + "M1.5 11 V13.5 H6 V11 "
+        + "M9.5 4.9 a2.9 2.9 0 1 0 0.01 0 Z"
     }
     if (value === "ram") {
       return "M1.5 4.5 H14.5 V11 H1.5 Z "

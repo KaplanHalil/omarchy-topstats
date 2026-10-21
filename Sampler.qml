@@ -18,6 +18,7 @@ Item {
   property int gpuInterval: 2000
   property string gpuMode: "auto"
   property bool panelOpen: false
+  property bool gpuPanelVisible: false
 
   // CPU ---------------------------------------------------------------
   property real cpuPercent: 0
@@ -101,6 +102,7 @@ Item {
     if (value) {
       refreshProcesses()
     } else {
+      root.gpuPanelVisible = false
       root.previousProcessTimes = ({})
       root.previousProcessAt = 0
       root.topCpu = []
@@ -108,10 +110,15 @@ Item {
     }
   }
 
+  function setGpuPanelVisible(value) {
+    if (root.gpuPanelVisible === value) return
+    root.gpuPanelVisible = value
+    if (value && root.panelOpen && root.gpuVendor === "nvidia" && !gpuApps.running) gpuApps.running = true
+  }
+
   function refreshProcesses() {
     if (!root.panelOpen) return
     if (!processList.running) processList.running = true
-    if (root.gpuVendor === "nvidia" && !gpuApps.running) gpuApps.running = true
   }
 
   function applyProcessSnapshot(text) {
@@ -137,7 +144,17 @@ Item {
     memRows.sort(function(a, b) { return b.memory - a.memory })
     // The first snapshot only establishes a baseline. Showing it would rank
     // kernel threads at 0% for two seconds, which reads as a broken list.
-    if (elapsed > 0) root.topCpu = cpuRows.slice(0, 7)
+    if (elapsed > 0) {
+      var active = []
+      for (var j = 0; j < cpuRows.length; j++) {
+        var candidate = cpuRows[j]
+        // Kernel threads have no resident memory and would otherwise pad the
+        // list with 0% rows such as "7:1-events".
+        if (candidate.cpu >= 0.5 && candidate.memory > 0) active.push(candidate)
+        if (active.length === 7) break
+      }
+      root.topCpu = active
+    }
     root.topMemory = memRows.slice(0, 7)
     root.previousProcessTimes = next
     root.previousProcessAt = now
@@ -256,6 +273,14 @@ Item {
     repeat: true
     running: root.panelOpen
     onTriggered: root.refreshProcesses()
+  }
+
+  Timer {
+    id: gpuProcessTimer
+    interval: 5000
+    repeat: true
+    running: root.panelOpen && root.gpuPanelVisible
+    onTriggered: if (root.gpuPanelVisible && root.gpuVendor === "nvidia" && !gpuApps.running) gpuApps.running = true
   }
 
   FileView {
