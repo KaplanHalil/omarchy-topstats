@@ -61,7 +61,6 @@ Item {
   property var previousProcessTimes: ({})
   property real previousProcessAt: 0
 
-  readonly property string settingGpu: gpuMode
   readonly property int historyLimit: Math.max(12, Math.round(120000 / Math.max(500, interval)))
   readonly property int gpuHistoryLimit: Math.max(12, Math.round(120000 / Math.max(1000, gpuInterval)))
 
@@ -116,6 +115,7 @@ Item {
   }
 
   function applyProcessSnapshot(text) {
+    if (!root.panelOpen) return
     var rows = Model.parseProcessSnapshot(text)
     var now = Date.now()
     var elapsed = root.previousProcessAt > 0 ? (now - root.previousProcessAt) / 1000 : 0
@@ -170,6 +170,7 @@ Item {
   }
 
   function applyGpuProbe(text) {
+    if (root.gpuMode !== "auto") return
     var vendor = String(text || "").trim().split("\n")[0]
     if (vendor !== "nvidia" && vendor !== "amd") return
     root.gpuVendor = vendor
@@ -184,6 +185,7 @@ Item {
   }
 
   function applyNvidia(text) {
+    if (!root.gpuAvailable || root.gpuVendor !== "nvidia") return
     var next = Model.parseNvidia(text)
     if (!next) return
     root.gpuName = next.name
@@ -197,6 +199,7 @@ Item {
   }
 
   function applyAmd(text) {
+    if (!root.gpuAvailable || root.gpuVendor !== "amd") return
     var next = Model.parseAmd(text)
     if (!next) return
     root.gpuName = next.name
@@ -361,7 +364,7 @@ Item {
     command: ["nvidia-smi", "pmon", "-c", "1"]
     stdout: StdioCollector {
       waitForEnd: true
-      onStreamFinished: root.topGpu = Model.parseNvidiaProcesses(text)
+      onStreamFinished: if (root.panelOpen && root.gpuVendor === "nvidia") root.topGpu = Model.parseNvidiaProcesses(text)
     }
     stderr: StdioCollector { waitForEnd: true }
   }

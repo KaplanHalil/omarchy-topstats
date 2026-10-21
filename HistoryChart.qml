@@ -79,7 +79,7 @@ Item {
 
     Text {
       anchors.centerIn: parent
-      visible: !root.values || root.values.length < 2
+      visible: !root.values || root.values.length === 0
       text: "Collecting…"
       color: root.dim
       font.family: root.fontFamily
