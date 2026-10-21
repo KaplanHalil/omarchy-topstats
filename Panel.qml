@@ -6,10 +6,9 @@ import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
-// TopHat-style details card for the TopStats bar group. The card follows the
-// shell theme (surface, accent, corner radius, font) instead of hardcoding
-// GNOME's palette, but keeps TopHat's composition: centered heading, label /
-// value rows, a quiet history chart, top processes, and round actions.
+// Details card for the TopStats bar group. The card follows the shell theme
+// (surface, accent, corner radius, font) and uses a centered heading,
+// label/value rows, a quiet history chart, top applications, and round actions.
 Panel {
   id: root
   moduleName: "io.github.kaplanhalil.topstats"

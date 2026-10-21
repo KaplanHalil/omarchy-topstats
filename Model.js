@@ -61,9 +61,8 @@ function cpuCoreUsages(current, previous) {
   return out
 }
 
-// Memory "used" follows the same convention as GNOME System Monitor and
-// TopHat: total minus available, so reclaimable cache is not counted as
-// pressure.
+// Memory "used" follows the same convention as GNOME System Monitor:
+// total minus available, so reclaimable cache is not counted as pressure.
 function parseMeminfo(text) {
   var values = ({})
   var lines = String(text || "").split("\n")

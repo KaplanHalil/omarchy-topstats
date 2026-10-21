@@ -3,7 +3,7 @@ import qs.Commons
 import qs.Commons as Commons
 import "Model.js" as Model
 
-// Centered uptime block, mirroring TopHat's quiet closing note.
+// Centered uptime block, a quiet closing note.
 Item {
   id: root
 

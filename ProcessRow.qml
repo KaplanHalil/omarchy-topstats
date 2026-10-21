@@ -2,7 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// One row in the TopHat process table: name on the left, metric on the right.
+// One row in the application table: name on the left, metric on the right.
 Item {
   id: root
 

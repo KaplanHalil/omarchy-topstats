@@ -2,7 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// TopHat's history chart: a quiet dark well, thin accent bars, a percentage
+// History chart: a quiet dark well, thin accent bars, a percentage
 // scale on the right, and "2 mins ago / now" beneath. The canvas is redrawn
 // only when the sampler publishes a new history array, not on every frame.
 Item {

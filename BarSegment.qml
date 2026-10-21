@@ -2,7 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// One TopHat-style metric: label, optional percentage, and a compact meter.
+// One compact metric: label, optional percentage, and a small meter.
 // The meter is either a single vertical fill or a row of per-core bars.
 Item {
   id: root
@@ -101,8 +101,8 @@ Item {
         font.bold: root.critical
       }
 
-    // Single value meter, TopHat's default: a translucent 1.3em track with a
-    // fill growing from the bottom.
+    // Single value meter: a translucent 1.3em track with a fill growing from
+    // the bottom.
     Item {
       visible: !root.coresMode || root.vertical
       anchors.verticalCenter: parent.verticalCenter

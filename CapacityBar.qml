@@ -2,7 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// TopHat's capacity rule: a quiet track with a single accent fill. It is
+// Capacity rule: a quiet track with a single accent fill. It is
 // deliberately thinner than the history chart so the panel reads as
 // headline -> capacity -> trend.
 Item {

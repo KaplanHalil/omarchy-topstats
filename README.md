@@ -1,14 +1,13 @@
 # TopStats
 
 A native Omarchy bar widget for **CPU, GPU, RAM, and network** with a compact
-TopHat-style readout and a matching details panel.
+Omarchy-native readout and a matching details panel.
 
 TopStats shows four metrics as text label + value + micro meter in the bar.
 Clicking CPU, GPU, or RAM opens a theme-aware card with capacity bars, a
 two-minute history chart, top processes, and uptime; NET opens live rates,
-boot totals, and the active interface. The layout and visual
-language are inspired by the GNOME [TopHat](https://github.com/fflewddur/tophat)
-extension; the implementation is original Omarchy/Quickshell QML.
+boot totals, and the active interface. The implementation is original
+Omarchy/Quickshell QML.
 
 ![TopStats preview](preview.png)
 
@@ -24,7 +23,7 @@ extension; the implementation is original Omarchy/Quickshell QML.
 - AMD GPU support through `amdgpu` sysfs (`gpu_busy_percent`,
   `mem_info_vram_*`, hwmon temperature and power).
 - RAM and swap usage with available/total sizes; the bar shows used/total GiB.
-- Two-minute history charts with the same 100/50/0 scale as TopHat.
+- Two-minute history charts with a 100/50/0 scale.
 - Follows the active Omarchy theme, font, corner radius, and accent color.
 - Hover tooltips on each bar metric.
 - No root, no background daemon, and no outbound connections.
@@ -156,10 +155,7 @@ The plugin folder must be at the repository root: `manifest.json`,
 
 ## Credits and license
 
-TopStats is an independent implementation for Omarchy. Its bar meters,
-history chart, and panel composition are inspired by
-[GNOME TopHat](https://github.com/fflewddur/tophat) by Todd Kulesza
-(GPL-3.0). No TopHat code, icons, or other assets are included here; the text
-and meter styling is original QML.
+TopStats is an independent implementation for Omarchy, written as original
+Omarchy/Quickshell QML.
 
 TopStats is released under the MIT license. See [LICENSE](LICENSE).

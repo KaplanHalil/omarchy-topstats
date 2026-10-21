@@ -2,7 +2,7 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// A label/value row in the TopHat details card. Values are right-aligned and
+// A label/value row in the details card. Values are right-aligned and
 // slightly heavier so the eye can scan the numbers without reading the labels.
 Item {
   id: root
