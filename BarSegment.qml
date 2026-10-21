@@ -2,21 +2,23 @@ import QtQuick
 import qs.Commons
 import qs.Commons as Commons
 
-// One TopHat-style metric: icon, optional percentage, and a compact meter.
+// One TopHat-style metric: label, optional percentage, and a compact meter.
 // The meter is either a single vertical fill or a row of per-core bars.
 Item {
   id: root
 
   property var bar: null
-  property string iconKind: "cpu"
+  property string label: ""
   property bool vertical: false
   property bool showValue: true
+  property string displayText: ""
+  property real valueWidth: Style.space(30)
   property bool coresMode: false
   property var cores: []
   property real value: 0
   property color foreground: Commons.Color.foreground
-  property color accent: Commons.Color.accent
   property color urgent: Commons.Color.urgent
+  property color warning: "#e0af68"
   property string tooltipText: ""
 
   signal clicked(int button)
@@ -37,17 +39,28 @@ Item {
   Component.onDestruction: if (registeredBar && registeredBar.unregisterClickTarget) registeredBar.unregisterClickTarget(root)
 
   readonly property bool hot: mouse.containsMouse
-  readonly property bool critical: value >= 90
-  readonly property color stateColor: critical ? urgent : accent
-  readonly property real glyphSize: vertical ? Style.space(13) : Style.space(15)
+  readonly property bool critical: value >= 75
   readonly property real meterWidth: vertical ? Style.space(5) : Style.space(6)
   readonly property real meterHeight: vertical ? Style.space(14) : Style.space(16)
-  readonly property int coreBarWidth: 2
-  readonly property int coreGap: 1
+  readonly property real coreTrackHeight: Style.space(18)
+  readonly property real coreBarWidth: Math.max(2, Style.space(3))
+  readonly property real coreGap: Math.max(1, Style.space(1))
   readonly property real coreTrackWidth: Math.max(
     Style.space(34),
     cores.length * coreBarWidth + Math.max(0, cores.length - 1) * coreGap + Style.space(4)
   )
+
+  // White -> amber -> theme red. The component is shared by CPU, GPU, and
+  // RAM, so all three follow the same thresholds.
+  function levelColor(load) {
+    var n = Number(load)
+    if (!isFinite(n)) return foreground
+    if (n >= 75) return urgent
+    if (n >= 50) return warning
+    return foreground
+  }
+
+  readonly property color valueColor: levelColor(value)
 
   implicitWidth: content.implicitWidth + Style.space(vertical ? 3 : 7) * 2
   implicitHeight: bar ? bar.barSize : Style.bar.sizeHorizontal
@@ -64,26 +77,29 @@ Item {
     anchors.centerIn: parent
     spacing: Style.space(vertical ? 3 : 4)
 
-    Icon {
-      anchors.verticalCenter: parent.verticalCenter
-      kind: root.iconKind
-      color: root.critical ? root.urgent : root.foreground
-      glyphSize: root.glyphSize
-      strokeWidth: 1.1
-    }
-
     Text {
-      visible: root.showValue && !root.vertical
       anchors.verticalCenter: parent.verticalCenter
-      width: Style.space(29)
       textFormat: Text.PlainText
-      text: root.value < 0 ? "—" : Math.round(root.value) + "%"
-      horizontalAlignment: Text.AlignRight
-      color: root.critical ? root.urgent : root.foreground
+      text: root.vertical ? root.label.charAt(0) : root.label
+      color: root.foreground
       font.family: styleFont
       font.pixelSize: Style.font.bodySmall
-      font.bold: root.critical
+      font.bold: true
+      font.letterSpacing: 0.5
     }
+
+      Text {
+        visible: root.showValue && !root.vertical
+        anchors.verticalCenter: parent.verticalCenter
+        width: root.valueWidth
+        textFormat: Text.PlainText
+        text: root.displayText !== "" ? root.displayText : (root.value < 0 ? "—" : Math.round(root.value) + "%")
+        horizontalAlignment: Text.AlignRight
+        color: root.valueColor
+        font.family: styleFont
+        font.pixelSize: Style.font.bodySmall
+        font.bold: root.critical
+      }
 
     // Single value meter, TopHat's default: a translucent 1.3em track with a
     // fill growing from the bottom.
@@ -104,19 +120,19 @@ Item {
         width: parent.width
         height: Math.max(1, parent.height * Math.max(0, Math.min(100, root.value)) / 100)
         radius: Style.space(2)
-        color: root.stateColor
+        color: root.valueColor
         Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         Behavior on color { ColorAnimation { duration: 160 } }
       }
     }
 
-    // Per-core mode. A 24-thread CPU still fits in roughly 70px, which is
-    // why this stays usable in a bar that already has a tray.
+    // Per-core mode. At 3px + 1px gap a 24-thread CPU takes about 99px, so it
+    // still fits beside the percentage without swallowing the bar.
     Rectangle {
       visible: root.coresMode && !root.vertical
       anchors.verticalCenter: parent.verticalCenter
       width: root.coreTrackWidth
-      height: root.meterHeight
+      height: root.coreTrackHeight
       radius: Style.space(2)
       color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.16)
 
@@ -137,7 +153,8 @@ Item {
               anchors.bottom: parent.bottom
               width: parent.width
               height: Math.max(1, parent.height * Math.max(0, Math.min(100, Number(root.cores[index]) || 0)) / 100)
-              color: root.stateColor
+              radius: Style.space(1)
+              color: root.levelColor(Number(root.cores[index]) || 0)
             }
           }
         }

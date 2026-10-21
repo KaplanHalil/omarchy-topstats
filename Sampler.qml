@@ -56,11 +56,23 @@ Item {
   property var topGpu: []
 
   // Processes / uptime ------------------------------------------------
-  property var topCpu: []
-  property var topMemory: []
+  property var topAppsCpu: []
+  property var topAppsRam: []
   property real uptime: 0
   property var previousProcessTimes: ({})
   property real previousProcessAt: 0
+  property var processNames: ({})
+
+  // Network -----------------------------------------------------------
+  property bool networkEnabled: true
+  property bool netAvailable: false
+  property real netRxRate: 0
+  property real netTxRate: 0
+  property real netRxTotal: 0
+  property real netTxTotal: 0
+  property string netInterfaces: ""
+  property var previousNet: null
+  property real previousNetAt: 0
 
   readonly property int historyLimit: Math.max(12, Math.round(120000 / Math.max(500, interval)))
   readonly property int gpuHistoryLimit: Math.max(12, Math.round(120000 / Math.max(1000, gpuInterval)))
@@ -96,6 +108,39 @@ Item {
     root.memoryHistory = Model.pushHistory(root.memoryHistory, next.percent, root.historyLimit)
   }
 
+  function applyNetDev(text) {
+    var current = Model.parseNetDev(text)
+    var now = Date.now()
+    root.netAvailable = current.interfaces.length > 0
+    root.netInterfaces = current.interfaces.join(", ")
+    if (root.previousNet !== null && root.previousNetAt > 0) {
+      var elapsed = (now - root.previousNetAt) / 1000
+      if (elapsed > 0) {
+        var rx = current.rxBytes - root.previousNet.rxBytes
+        var tx = current.txBytes - root.previousNet.txBytes
+        // Interface resets can make a counter go backwards; treat that as a
+        // fresh baseline instead of a negative or astronomically large rate.
+        root.netRxRate = rx >= 0 ? rx / elapsed : 0
+        root.netTxRate = tx >= 0 ? tx / elapsed : 0
+      }
+    }
+    root.netRxTotal = current.rxBytes
+    root.netTxTotal = current.txBytes
+    root.previousNet = current
+    root.previousNetAt = now
+  }
+
+  onNetworkEnabledChanged: {
+    root.previousNet = null
+    root.previousNetAt = 0
+    root.netRxRate = 0
+    root.netTxRate = 0
+    if (root.networkEnabled) {
+      netFile.reload()
+      netTimer.restart()
+    }
+  }
+
   function setPanelOpen(value) {
     if (root.panelOpen === value) return
     root.panelOpen = value
@@ -105,7 +150,9 @@ Item {
       root.gpuPanelVisible = false
       root.previousProcessTimes = ({})
       root.previousProcessAt = 0
-      root.topCpu = []
+      root.processNames = ({})
+      root.topAppsCpu = []
+      root.topAppsRam = []
       root.topGpu = []
     }
   }
@@ -128,36 +175,64 @@ Item {
     var elapsed = root.previousProcessAt > 0 ? (now - root.previousProcessAt) / 1000 : 0
     var previous = root.previousProcessTimes || ({})
     var next = ({})
-    var cpuRows = []
-    var memRows = []
+    var names = ({})
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i]
       next[row.pid] = row.cpuSeconds
+      names[row.pid] = row.name
       var before = previous[row.pid]
       row.cpu = (before !== undefined && elapsed > 0)
         ? Math.max(0, (row.cpuSeconds - before) / elapsed * 100)
         : 0
-      cpuRows.push(row)
-      memRows.push(row)
     }
-    cpuRows.sort(function(a, b) { return b.cpu - a.cpu })
-    memRows.sort(function(a, b) { return b.memory - a.memory })
-    // The first snapshot only establishes a baseline. Showing it would rank
-    // kernel threads at 0% for two seconds, which reads as a broken list.
-    if (elapsed > 0) {
-      var active = []
-      for (var j = 0; j < cpuRows.length; j++) {
-        var candidate = cpuRows[j]
-        // Kernel threads have no resident memory and would otherwise pad the
-        // list with 0% rows such as "7:1-events".
-        if (candidate.cpu >= 0.5 && candidate.memory > 0) active.push(candidate)
-        if (active.length === 7) break
-      }
-      root.topCpu = active
+    root.processNames = names
+
+    var apps = Model.aggregateApps(rows)
+    // Aggregated app CPU is the sum of its processes' per-core percentages.
+    // Divide by the logical CPU count so the app column is a share of the
+    // whole machine, matching the overall CPU number above it.
+    var cpuCount = Math.max(1, root.cpuCores.length)
+    for (var a = 0; a < apps.length; a++) apps[a].cpu = apps[a].cpu / cpuCount
+    var cpuSorted = apps.slice().sort(function(a, b) {
+      return (b.cpu - a.cpu) || (b.memory - a.memory)
+    })
+    var ramSorted = apps.slice().sort(function(a, b) { return b.memory - a.memory })
+
+    // Always fill three rows. Active CPU applications come first; when the
+    // desktop is idle the remainder is filled by resident-memory order so the
+    // section still names real applications instead of going blank.
+    var picked = []
+    var seen = ({})
+    for (var c = 0; c < cpuSorted.length && picked.length < 3; c++) {
+      var hot = cpuSorted[c]
+      if (hot.cpu < 0.1) continue
+      picked.push(hot)
+      seen[String(hot.name).toLowerCase()] = true
     }
-    root.topMemory = memRows.slice(0, 7)
+    for (var m = 0; m < ramSorted.length && picked.length < 3; m++) {
+      var app = ramSorted[m]
+      var key = String(app.name).toLowerCase()
+      if (seen[key]) continue
+      picked.push(app)
+      seen[key] = true
+    }
+
+    root.topAppsCpu = picked
+    root.topAppsRam = ramSorted.slice(0, 3)
     root.previousProcessTimes = next
     root.previousProcessAt = now
+  }
+
+  function applyGpuApps(text) {
+    if (!root.panelOpen || root.gpuVendor !== "nvidia") return
+    var raw = Model.parseNvidiaProcesses(text)
+    for (var i = 0; i < raw.length; i++) {
+      var resolved = root.processNames[raw[i].pid]
+      if (resolved) raw[i].name = resolved
+    }
+    var apps = Model.aggregateApps(raw)
+    apps.sort(function(a, b) { return b.gpu - a.gpu })
+    root.topGpu = apps.slice(0, 3)
   }
 
   function probeGpu() {
@@ -260,6 +335,15 @@ Item {
   }
 
   Timer {
+    id: netTimer
+    interval: 2000
+    repeat: true
+    running: root.networkEnabled
+    triggeredOnStart: true
+    onTriggered: netFile.reload()
+  }
+
+  Timer {
     id: gpuTimer
     interval: Math.max(1000, Number(root.gpuInterval) || 2000)
     repeat: true
@@ -316,6 +400,14 @@ Item {
     watchChanges: false
     printErrors: false
     onLoaded: root.uptime = Model.parseUptime(text())
+  }
+
+  FileView {
+    id: netFile
+    path: "/proc/net/dev"
+    watchChanges: false
+    printErrors: false
+    onLoaded: root.applyNetDev(text())
   }
 
   FileView {
@@ -389,7 +481,7 @@ Item {
     command: ["nvidia-smi", "pmon", "-c", "1"]
     stdout: StdioCollector {
       waitForEnd: true
-      onStreamFinished: if (root.panelOpen && root.gpuVendor === "nvidia") root.topGpu = Model.parseNvidiaProcesses(text)
+      onStreamFinished: root.applyGpuApps(text)
     }
     stderr: StdioCollector { waitForEnd: true }
   }

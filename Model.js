@@ -175,7 +175,8 @@ function parseAmd(text) {
 // nvidia-smi pmon -c 1 lists every process with a graphics or compute
 // context, unlike --query-compute-apps which omits graphics clients such as
 // the compositor and browser. Columns: gpu pid type sm mem enc dec jpg ofa
-// command. A dash means the column does not apply to that context.
+// command. A dash means the column does not apply to that context. Zero-usage
+// contexts are kept so the GPU tab can always name the applications using it.
 function parseNvidiaProcesses(text) {
   var out = []
   var lines = String(text || "").split("\n")
@@ -185,7 +186,6 @@ function parseNvidiaProcesses(text) {
     var parts = line.split(/\s+/)
     if (parts.length < 10) continue
     var gpu = toNumber(parts[3], 0)
-    if (gpu <= 0) continue
     var name = parts.slice(9).join(" ")
     out.push({
       pid: Number(parts[1]),
@@ -194,7 +194,7 @@ function parseNvidiaProcesses(text) {
     })
   }
   out.sort(function(a, b) { return b.gpu - a.gpu })
-  return out.slice(0, 7)
+  return out
 }
 
 // ps reports cumulative CPU time as [[dd-]hh:]mm:ss. Converting it to seconds
@@ -246,6 +246,32 @@ function processName(value) {
   return name.length > 26 ? name.slice(0, 25) + "…" : name
 }
 
+// Collapse processes that share a command name into one application row.
+// Kernel threads are dropped (they have no resident memory) so an idle list
+// is filled with real applications rather than "7:1-events" and friends.
+function aggregateApps(rows) {
+  var byName = {}
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i]
+    var memory = Number(row.memory) || 0
+    if (!row.name) continue
+    // ps rows carry RSS; pmon rows do not. Only treat RSS==0 as a kernel
+    // thread when the row actually came from ps.
+    if (row.memory !== undefined && memory <= 0) continue
+    var key = String(row.name).toLowerCase()
+    if (!byName[key]) {
+      byName[key] = { name: row.name, cpu: 0, memory: 0, gpu: 0, pids: [] }
+    }
+    byName[key].cpu += Number(row.cpu) || 0
+    byName[key].memory += memory
+    byName[key].gpu += Number(row.gpu) || 0
+    byName[key].pids.push(row.pid)
+  }
+  var out = []
+  for (var name in byName) out.push(byName[name])
+  return out
+}
+
 function formatBytes(bytes, decimals) {
   var n = Number(bytes)
   if (!isFinite(n) || n < 0) return "—"
@@ -257,6 +283,54 @@ function formatBytes(bytes, decimals) {
   }
   if (n >= 1024) return trimFixed(n / 1024, 0) + " KB"
   return Math.round(n) + " B"
+}
+
+// Network rates use the same binary units as the rest of the plugin. The
+// compact form is for the bar; the full form is for tooltips and the panel.
+// Both deliberately round to whole units: a system monitor does not need
+// 1.83K/s in the top bar.
+function formatRate(bytesPerSec) {
+  var n = Number(bytesPerSec)
+  if (!isFinite(n) || n < 0) n = 0
+  if (n >= 1024 * 1024 * 1024) return trimFixed(n / (1024 * 1024 * 1024), 1) + " GB/s"
+  if (n >= 1024 * 1024) return Math.round(n / (1024 * 1024)) + " MB/s"
+  if (n >= 1024) return Math.round(n / 1024) + " KB/s"
+  return Math.round(n) + " B/s"
+}
+
+function formatRateCompact(bytesPerSec) {
+  var n = Number(bytesPerSec)
+  if (!isFinite(n) || n < 0) n = 0
+  if (n >= 1024 * 1024 * 1024) return trimFixed(n / (1024 * 1024 * 1024), 1) + "G/s"
+  if (n >= 1024 * 1024) return Math.round(n / (1024 * 1024)) + "M/s"
+  if (n >= 1024) return Math.round(n / 1024) + "K/s"
+  return Math.round(n) + "B/s"
+}
+
+// /proc/net/dev: loopback is excluded, and interfaces whose counters are
+// still zero are ignored. Summing the rest gives the same view as a desktop
+// network monitor without depending on NetworkManager.
+function parseNetDev(text) {
+  var lines = String(text || "").split("\n")
+  var rx = 0
+  var tx = 0
+  var interfaces = []
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i]
+    var colon = line.indexOf(":")
+    if (colon === -1) continue
+    var iface = line.slice(0, colon).trim()
+    if (!iface || iface === "lo") continue
+    var fields = line.slice(colon + 1).trim().split(/\s+/)
+    if (fields.length < 9) continue
+    var ifaceRx = Number(fields[0]) || 0
+    var ifaceTx = Number(fields[8]) || 0
+    if (ifaceRx === 0 && ifaceTx === 0) continue
+    rx += ifaceRx
+    tx += ifaceTx
+    interfaces.push(iface)
+  }
+  return { rxBytes: rx, txBytes: tx, interfaces: interfaces }
 }
 
 function trimFixed(value, decimals) {

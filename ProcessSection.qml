@@ -19,8 +19,12 @@ Item {
 
   function rowValue(row) {
     if (root.mode === "mem") return Model.formatBytes(row.memory)
-    if (root.mode === "gpu") return Model.formatPercent(row.gpu)
-    return Model.formatPercent(row.cpu)
+    if (root.mode === "gpu") {
+      var gpu = Number(row.gpu) || 0
+      return gpu < 1 ? "< 1%" : Model.formatPercent(gpu)
+    }
+    var cpu = Number(row.cpu) || 0
+    return cpu < 1 ? "< 1%" : Model.formatPercent(cpu)
   }
 
   Column {

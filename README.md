@@ -1,11 +1,12 @@
 # TopStats
 
-A native Omarchy bar widget for **CPU, GPU, and RAM** with a compact
+A native Omarchy bar widget for **CPU, GPU, RAM, and network** with a compact
 TopHat-style readout and a matching details panel.
 
-TopStats shows the three metrics as icon + percentage + micro meter in the
-bar. Clicking a metric opens a theme-aware card with capacity bars, a
-two-minute history chart, top processes, and uptime. The layout and visual
+TopStats shows four metrics as text label + value + micro meter in the bar.
+Clicking CPU, GPU, or RAM opens a theme-aware card with capacity bars, a
+two-minute history chart, top processes, and uptime; NET opens live rates,
+boot totals, and the active interface. The layout and visual
 language are inspired by the GNOME [TopHat](https://github.com/fflewddur/tophat)
 extension; the implementation is original Omarchy/Quickshell QML.
 
@@ -14,16 +15,19 @@ extension; the implementation is original Omarchy/Quickshell QML.
 ## Features
 
 - CPU utilization, per-core bars, frequency, package temperature, and uptime.
+- White / amber / red meters at 50% and 75%; each core is colored independently.
+- Text labels (`CPU`, `GPU`, `RAM`, `NET`) in the bar instead of icons.
+- Compact upload/download rates with a NET tab for live rates and boot totals.
+- Top three applications by CPU (share of total system), memory, or GPU activity — never an empty list.
 - NVIDIA GPU utilization, VRAM, temperature, power, driver, and per-process
   GPU activity (via `nvidia-smi pmon`).
 - AMD GPU support through `amdgpu` sysfs (`gpu_busy_percent`,
   `mem_info_vram_*`, hwmon temperature and power).
-- RAM and swap usage with available/total sizes.
-- Top processes by instantaneous CPU use, resident memory, or GPU activity.
+- RAM and swap usage with available/total sizes; the bar shows used/total GiB.
 - Two-minute history charts with the same 100/50/0 scale as TopHat.
 - Follows the active Omarchy theme, font, corner radius, and accent color.
 - Hover tooltips on each bar metric.
-- No root, no background daemon, and no network access.
+- No root, no background daemon, and no outbound connections.
 
 ## Requirements
 
@@ -55,16 +59,16 @@ omarchy bar move io.github.kaplanhalil.topstats --section right
 
 ## Use
 
-- **Left click** a metric: open the details panel on CPU, GPU, or RAM.
+- **Left click** a metric: open the details panel on CPU, GPU, RAM, or NET.
 - **Right click** a metric: open btop.
 - **Esc**: close the panel.
 - **Left/Right** (or `h`/`l`): switch tabs.
-- **1 / 2 / 3**: jump to CPU / GPU / RAM.
+- **1 / 2 / 3 / 4**: jump to CPU / GPU / RAM / NET.
 - **r**: refresh the process lists.
 - **s**: toggle the settings page.
 - The round buttons at the bottom open btop and the settings page.
 
-The bar automatically switches to a compact icon + meter layout when the bar
+The bar automatically switches to a compact label + meter layout when the bar
 is placed on the left or right edge.
 
 ## Settings
@@ -75,7 +79,10 @@ Open the gear in the panel, or edit the widget entry in
 ```json
 {
   "id": "io.github.kaplanhalil.topstats",
-  "showValues": true,
+  "showCpuValue": true,
+  "showGpuValue": true,
+  "showRamValue": true,
+  "showNetwork": true,
   "cpuStyle": "meter",
   "gpuDevice": "auto",
   "interval": 1000,
@@ -85,11 +92,17 @@ Open the gear in the panel, or edit the widget entry in
 
 | Key | Default | Values | Meaning |
 | --- | --- | --- | --- |
-| `showValues` | `true` | boolean | Show percentages beside the icons |
+| `showCpuValue` | `true` | boolean | Show the CPU percentage in the bar |
+| `showGpuValue` | `true` | boolean | Show the GPU percentage in the bar |
+| `showRamValue` | `true` | boolean | Show RAM used/total in the bar |
+| `showNetwork` | `true` | boolean | Show the NET upload/download segment |
 | `cpuStyle` | `"meter"` | `"meter"`, `"cores"` | Single bar or one bar per logical CPU |
 | `gpuDevice` | `"auto"` | `"auto"`, `"nvidia"`, `"amd"`, `"off"` | GPU backend |
 | `interval` | `1000` | milliseconds ≥ 500 | CPU/RAM sampling interval |
 | `gpuInterval` | `2000` | milliseconds ≥ 1000 | GPU polling interval |
+
+The older `showValues` key is still accepted as a fallback when the
+per-metric keys are absent.
 
 Settings changed in the panel are written back to `shell.json` through
 Omarchy's normal bar-entry update path.
@@ -107,6 +120,7 @@ Omarchy's normal bar-entry update path.
 | NVIDIA | `nvidia-smi --query-gpu`, `nvidia-smi pmon` for processes |
 | AMD | `/sys/class/drm/card*/device/` sysfs |
 | Processes | `/proc/<pid>` via `ps` (CPU is an instantaneous delta, not a lifetime average) |
+| Network | `/proc/net/dev` deltas sampled every 2 s, loopback excluded, summed across active interfaces |
 | Uptime | `/proc/uptime` |
 
 All sampling happens locally. TopStats opens no network connections and does
@@ -145,7 +159,7 @@ The plugin folder must be at the repository root: `manifest.json`,
 TopStats is an independent implementation for Omarchy. Its bar meters,
 history chart, and panel composition are inspired by
 [GNOME TopHat](https://github.com/fflewddur/tophat) by Todd Kulesza
-(GPL-3.0). No TopHat code, icons, or other assets are included here; the icons
-are drawn as original SVG paths.
+(GPL-3.0). No TopHat code, icons, or other assets are included here; the text
+and meter styling is original QML.
 
 TopStats is released under the MIT license. See [LICENSE](LICENSE).

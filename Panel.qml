@@ -35,14 +35,18 @@ Panel {
     var out = [{ id: "cpu", label: "CPU" }]
     if (sampler && sampler.gpuAvailable) out.push({ id: "gpu", label: "GPU" })
     out.push({ id: "ram", label: "RAM" })
+    if (sampler && sampler.netAvailable && showNetworkSetting) out.push({ id: "net", label: "NET" })
     return out
   }
 
   readonly property string heading: settingsMode
     ? "TopStats settings"
-    : (tab === "gpu" ? "Graphics usage" : tab === "ram" ? "Memory usage" : "Processor usage")
+    : (tab === "gpu" ? "Graphics usage" : tab === "ram" ? "Memory usage" : tab === "net" ? "Network activity" : "Processor usage")
 
-  readonly property bool showValuesSetting: boolSetting("showValues", true)
+  readonly property bool showCpuValueSetting: boolSetting("showCpuValue", boolSetting("showValues", true))
+  readonly property bool showGpuValueSetting: boolSetting("showGpuValue", boolSetting("showValues", true))
+  readonly property bool showRamValueSetting: boolSetting("showRamValue", boolSetting("showValues", true))
+  readonly property bool showNetworkSetting: boolSetting("showNetwork", true)
   readonly property string cpuStyleSetting: String(setting("cpuStyle", "meter"))
   readonly property bool gpuEnabledSetting: String(setting("gpuDevice", "auto")) !== "off"
   readonly property int intervalSetting: Math.max(500, Number(setting("interval", 1000)) || 1000)
@@ -60,6 +64,7 @@ Panel {
 
   function openFor(metric) {
     if (metric === "gpu" && !(sampler && sampler.gpuAvailable)) metric = "cpu"
+    if (metric === "net" && !(sampler && sampler.netAvailable && showNetworkSetting)) metric = "cpu"
     tab = metric
     settingsMode = false
     if (!opened) controller.show()
@@ -76,6 +81,7 @@ Panel {
   onTabChanged: syncGpuPanel()
   onSettingsModeChanged: syncGpuPanel()
   onOpenedChanged: syncGpuPanel()
+  onShowNetworkSettingChanged: if (!showNetworkSetting && tab === "net") tab = "cpu"
 
   function open() {
     openFor(tab)
@@ -111,6 +117,7 @@ Panel {
   function formatFrequency(value) { return Model.formatFrequency(value) }
   function formatPower(value) { return Model.formatPower(value) }
   function formatUptime(value) { return Model.formatUptime(value) }
+  function formatRate(value) { return Model.formatRate(value) }
   function formatCount(value) {
     var n = Number(value)
     return isFinite(n) ? String(Math.round(n)) : "—"
@@ -156,6 +163,7 @@ Panel {
         else if (text === "1") root.tab = "cpu"
         else if (text === "2" && root.sampler && root.sampler.gpuAvailable) root.tab = "gpu"
         else if (text === "3") root.tab = "ram"
+        else if (text === "4" && root.sampler && root.sampler.netAvailable && root.showNetworkSetting) root.tab = "net"
       }
 
       Flickable {
@@ -307,10 +315,10 @@ Panel {
 
             ProcessSection {
               width: parent.width
-              title: "Top processes"
-              rows: root.sampler ? root.sampler.topCpu : []
+              title: "Top applications"
+              rows: root.sampler ? root.sampler.topAppsCpu : []
               mode: "cpu"
-              emptyText: "No active processes"
+              emptyText: "Collecting…"
               foreground: root.foreground
               fontFamily: root.fontFamily
             }
@@ -395,7 +403,7 @@ Panel {
 
             ProcessSection {
               width: parent.width
-              title: "Top GPU processes"
+              title: "Top GPU applications"
               rows: root.sampler ? root.sampler.topGpu : []
               mode: "gpu"
               emptyText: root.sampler && root.sampler.gpuVendor === "amd"
@@ -480,8 +488,8 @@ Panel {
 
             ProcessSection {
               width: parent.width
-              title: "Top processes"
-              rows: root.sampler ? root.sampler.topMemory : []
+              title: "Top applications"
+              rows: root.sampler ? root.sampler.topAppsRam : []
               mode: "mem"
               foreground: root.foreground
               fontFamily: root.fontFamily
@@ -495,6 +503,67 @@ Panel {
             }
           }
 
+          // ---------- Network ----------
+          Column {
+            visible: !root.settingsMode && root.tab === "net" && root.sampler && root.sampler.netAvailable
+            width: parent.width
+            spacing: Style.space(7)
+
+            StatRow {
+              width: parent.width
+              label: "Download:"
+              value: root.sampler ? root.formatRate(root.sampler.netRxRate) : "—"
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+
+            StatRow {
+              width: parent.width
+              label: "Upload:"
+              value: root.sampler ? root.formatRate(root.sampler.netTxRate) : "—"
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+
+            StatRow {
+              width: parent.width
+              label: "Received:"
+              value: root.sampler ? root.formatBytes(root.sampler.netRxTotal) : "—"
+              detail: true
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+
+            StatRow {
+              width: parent.width
+              label: "Sent:"
+              value: root.sampler ? root.formatBytes(root.sampler.netTxTotal) : "—"
+              detail: true
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+
+            StatRow {
+              width: parent.width
+              label: "Interface:"
+              value: root.sampler && root.sampler.netInterfaces !== "" ? root.sampler.netInterfaces : "—"
+              detail: true
+              foreground: root.foreground
+              fontFamily: root.fontFamily
+            }
+
+            Text {
+              width: parent.width
+              textFormat: Text.PlainText
+              text: "Received and sent counters are since boot."
+              color: root.dim
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+              topPadding: Style.space(4)
+            }
+          }
+
           // ---------- Settings ----------
           Column {
             visible: root.settingsMode
@@ -503,13 +572,35 @@ Panel {
 
             Toggle {
               width: parent.width
-              label: "Show percentages"
-              description: "Icon + meter only when disabled"
-              checked: root.showValuesSetting
+              label: "CPU percentage"
+              description: "Show CPU load in the bar"
+              checked: root.showCpuValueSetting
               foreground: root.foreground
               accent: root.accent
               fontFamily: root.fontFamily
-              onClicked: root.persist({ showValues: !root.showValuesSetting })
+              onClicked: root.persist({ showCpuValue: !root.showCpuValueSetting })
+            }
+
+            Toggle {
+              width: parent.width
+              label: "GPU percentage"
+              description: "Show GPU load in the bar"
+              checked: root.showGpuValueSetting
+              foreground: root.foreground
+              accent: root.accent
+              fontFamily: root.fontFamily
+              onClicked: root.persist({ showGpuValue: !root.showGpuValueSetting })
+            }
+
+            Toggle {
+              width: parent.width
+              label: "RAM used/total"
+              description: "Show used and total GiB in the bar"
+              checked: root.showRamValueSetting
+              foreground: root.foreground
+              accent: root.accent
+              fontFamily: root.fontFamily
+              onClicked: root.persist({ showRamValue: !root.showRamValueSetting })
             }
 
             Toggle {
@@ -532,6 +623,17 @@ Panel {
               accent: root.accent
               fontFamily: root.fontFamily
               onClicked: root.persist({ gpuDevice: root.gpuEnabledSetting ? "off" : "auto" })
+            }
+
+            Toggle {
+              width: parent.width
+              label: "Network speed"
+              description: "Upload/download rates in the bar"
+              checked: root.showNetworkSetting
+              foreground: root.foreground
+              accent: root.accent
+              fontFamily: root.fontFamily
+              onClicked: root.persist({ showNetwork: !root.showNetworkSetting })
             }
 
             Item { width: 1; height: Style.space(2) }

@@ -6,7 +6,7 @@ import qs.Commons as Commons
 import qs.Ui
 import "Model.js" as Model
 
-// TopStats bar widget: a single compact group for CPU, GPU, and RAM.
+// TopStats bar widget: a single compact group for CPU, GPU, RAM and network.
 // Left click opens the details panel on that metric, right click opens btop.
 BarWidget {
   id: root
@@ -14,11 +14,25 @@ BarWidget {
 
   property string lastMetric: "cpu"
 
-  readonly property bool showValues: boolSetting("showValues", true)
+  readonly property bool showCpuValue: boolSetting("showCpuValue", boolSetting("showValues", true))
+  readonly property bool showGpuValue: boolSetting("showGpuValue", boolSetting("showValues", true))
+  readonly property bool showRamValue: boolSetting("showRamValue", boolSetting("showValues", true))
   readonly property string cpuStyle: String(setting("cpuStyle", "meter"))
   readonly property bool showGpu: boolSetting("showGpu", true)
+  readonly property bool showNetwork: boolSetting("showNetwork", true)
   readonly property var foregroundColor: bar ? bar.foreground : Commons.Color.foreground
   readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+  readonly property bool gpuVisible: root.showGpu && sampler.gpuAvailable
+  readonly property bool netVisible: root.showNetwork && !root.vertical && sampler.netAvailable
+  readonly property int segmentCount: 2 + (root.gpuVisible ? 1 : 0) + (root.netVisible ? 1 : 0)
+
+  function ramFraction() {
+    var totalGiB = sampler.memory.total / (1024 * 1024 * 1024)
+    if (!isFinite(totalGiB) || totalGiB <= 0) return "—"
+    var usedGiB = sampler.memory.used / (1024 * 1024 * 1024)
+    var usedText = usedGiB.toFixed(1).replace(/\.0$/, "")
+    return usedText + "/" + Math.round(totalGiB)
+  }
 
   function boolSetting(name, fallback) {
     var value = setting(name, fallback)
@@ -89,12 +103,13 @@ BarWidget {
     interval: Math.max(500, Number(root.setting("interval", 1000)) || 1000)
     gpuInterval: Math.max(1000, Number(root.setting("gpuInterval", 2000)) || 2000)
     gpuMode: String(root.setting("gpuDevice", "auto"))
+    networkEnabled: root.showNetwork
   }
 
   Grid {
     id: layout
     anchors.centerIn: parent
-    columns: root.vertical ? 1 : (root.showGpu && sampler.gpuAvailable ? 3 : 2)
+    columns: root.vertical ? 1 : root.segmentCount
     flow: Grid.LeftToRight
     spacing: root.vertical ? Style.space(1) : Style.space(7)
 
@@ -102,13 +117,12 @@ BarWidget {
       id: cpuSegment
       bar: root.bar
       vertical: root.vertical
-      iconKind: "cpu"
+      label: "CPU"
       value: sampler.cpuPercent
       coresMode: root.cpuStyle === "cores"
       cores: sampler.cpuCores
-      showValue: root.showValues
+      showValue: root.showCpuValue
       foreground: root.foregroundColor
-      accent: Commons.Color.accent
       urgent: bar ? bar.urgent : Commons.Color.urgent
       tooltipText: root.cpuTooltip()
       onClicked: function(button) { root.handleSegment("cpu", button) }
@@ -119,11 +133,10 @@ BarWidget {
       visible: root.showGpu && sampler.gpuAvailable
       bar: root.bar
       vertical: root.vertical
-      iconKind: "gpu"
+      label: "GPU"
       value: sampler.gpuPercent
-      showValue: root.showValues
+      showValue: root.showGpuValue
       foreground: root.foregroundColor
-      accent: Commons.Color.accent
       urgent: bar ? bar.urgent : Commons.Color.urgent
       tooltipText: root.gpuTooltip()
       onClicked: function(button) { root.handleSegment("gpu", button) }
@@ -133,14 +146,27 @@ BarWidget {
       id: memorySegment
       bar: root.bar
       vertical: root.vertical
-      iconKind: "ram"
+      label: "RAM"
       value: sampler.memory.percent
-      showValue: root.showValues
+      displayText: root.ramFraction()
+      valueWidth: Style.space(50)
+      showValue: root.showRamValue
       foreground: root.foregroundColor
-      accent: Commons.Color.accent
       urgent: bar ? bar.urgent : Commons.Color.urgent
       tooltipText: root.memoryTooltip()
       onClicked: function(button) { root.handleSegment("ram", button) }
+    }
+
+    NetSegment {
+      id: networkSegment
+      visible: root.netVisible
+      bar: root.bar
+      rxRate: sampler.netRxRate
+      txRate: sampler.netTxRate
+      interfaces: sampler.netInterfaces
+      foreground: root.foregroundColor
+      accent: Commons.Color.accent
+      onClicked: function(button) { root.handleSegment("net", button) }
     }
   }
 
@@ -179,6 +205,7 @@ BarWidget {
     function cpu(): void { root.openMetric("cpu") }
     function gpu(): void { root.openMetric("gpu") }
     function ram(): void { root.openMetric("ram") }
+    function net(): void { root.openMetric("net") }
     function settings(): void {
       if (!panelLoader.item) return
       panelLoader.item.openFor(root.lastMetric)
