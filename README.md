@@ -30,8 +30,8 @@ extension; the implementation is original Omarchy/Quickshell QML.
 - Omarchy Quattro (4.x) with the Quickshell shell.
 - **NVIDIA:** `nvidia-utils` supplies `nvidia-smi` (normally already installed).
 - **AMD:** no extra package; reads `/sys/class/drm/...`.
-- **btop:** optional, only for the terminal button in the panel. Install with
-  `omarchy pkg add btop` if you do not already have it.
+- **btop:** optional, only for the terminal button in the panel. It is already
+  present on most Omarchy systems; install it with your package manager if not.
 
 If no supported GPU is found, the GPU segment and tab are hidden automatically.
 
