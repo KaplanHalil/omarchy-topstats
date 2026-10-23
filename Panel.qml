@@ -12,6 +12,7 @@ import "Model.js" as Model
 Panel {
   id: root
   moduleName: "io.github.kaplanhalil.topstats"
+  readonly property string coffeeUrl: "https://buymeacoffee.com/kaplanhalil"
   ipcTarget: ""
   manageIpc: false
 
@@ -46,7 +47,7 @@ Panel {
   readonly property bool showGpuValueSetting: boolSetting("showGpuValue", boolSetting("showValues", true))
   readonly property bool showRamValueSetting: boolSetting("showRamValue", boolSetting("showValues", true))
   readonly property bool showNetworkSetting: boolSetting("showNetwork", true)
-  readonly property string cpuStyleSetting: String(setting("cpuStyle", "meter"))
+  readonly property string cpuStyleSetting: String(setting("cpuStyle", "cores"))
   readonly property bool gpuEnabledSetting: String(setting("gpuDevice", "auto")) !== "off"
   readonly property int intervalSetting: Math.max(500, Number(setting("interval", 1000)) || 1000)
   readonly property int gpuIntervalSetting: Math.max(1000, Number(setting("gpuInterval", 2000)) || 2000)
@@ -742,6 +743,14 @@ Panel {
                 foreground: root.foreground
                 accent: root.accent
                 onClicked: root.settingsMode = !root.settingsMode
+              }
+
+              RoundAction {
+                iconText: "\uf0f4"
+                tooltipText: "Buy me a coffee"
+                foreground: root.foreground
+                accent: root.accent
+                onClicked: Qt.openUrlExternally(root.coffeeUrl)
               }
             }
           }

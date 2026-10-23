@@ -17,7 +17,7 @@ BarWidget {
   readonly property bool showCpuValue: boolSetting("showCpuValue", boolSetting("showValues", true))
   readonly property bool showGpuValue: boolSetting("showGpuValue", boolSetting("showValues", true))
   readonly property bool showRamValue: boolSetting("showRamValue", boolSetting("showValues", true))
-  readonly property string cpuStyle: String(setting("cpuStyle", "meter"))
+  readonly property string cpuStyle: String(setting("cpuStyle", "cores"))
   readonly property bool showGpu: boolSetting("showGpu", true)
   readonly property bool showNetwork: boolSetting("showNetwork", true)
   readonly property var foregroundColor: bar ? bar.foreground : Commons.Color.foreground

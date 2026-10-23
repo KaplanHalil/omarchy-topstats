@@ -1,5 +1,7 @@
 # TopStats
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-ffdd00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/kaplanhalil)
+
 A native Omarchy bar widget for **CPU, GPU, RAM, and network** with a compact
 Omarchy-native readout and a matching details panel.
 
@@ -82,7 +84,7 @@ Open the gear in the panel, or edit the widget entry in
   "showGpuValue": true,
   "showRamValue": true,
   "showNetwork": true,
-  "cpuStyle": "meter",
+  "cpuStyle": "cores",
   "gpuDevice": "auto",
   "interval": 1000,
   "gpuInterval": 2000
@@ -95,7 +97,7 @@ Open the gear in the panel, or edit the widget entry in
 | `showGpuValue` | `true` | boolean | Show the GPU percentage in the bar |
 | `showRamValue` | `true` | boolean | Show RAM used/total in the bar |
 | `showNetwork` | `true` | boolean | Show the NET upload/download segment |
-| `cpuStyle` | `"meter"` | `"meter"`, `"cores"` | Single bar or one bar per logical CPU |
+| `cpuStyle` | `"cores"` | `"meter"`, `"cores"` | One bar per logical CPU or a single bar |
 | `gpuDevice` | `"auto"` | `"auto"`, `"nvidia"`, `"amd"`, `"off"` | GPU backend |
 | `interval` | `1000` | milliseconds ≥ 500 | CPU/RAM sampling interval |
 | `gpuInterval` | `2000` | milliseconds ≥ 1000 | GPU polling interval |
@@ -152,6 +154,12 @@ qmllint -I "$LINT_ROOT" "$PLUGIN_DIR"/*.qml
 
 The plugin folder must be at the repository root: `manifest.json`,
 `BarWidget.qml`, and `Panel.qml` are loaded directly from it.
+
+## Support
+
+If TopStats is useful to you, you can buy me a coffee:
+
+[Buy Me a Coffee](https://buymeacoffee.com/kaplanhalil)
 
 ## Credits and license
 

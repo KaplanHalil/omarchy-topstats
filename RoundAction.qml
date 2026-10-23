@@ -3,8 +3,7 @@ import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
 
-// Circular footer action. Only two are used (btop and settings), so this
-// stays a small purpose-built control.
+// Circular footer action for the panel (btop, settings and support).
 Item {
   id: root
 
