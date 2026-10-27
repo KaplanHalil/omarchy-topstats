@@ -709,6 +709,38 @@ Panel {
               wrapMode: Text.WordWrap
             }
 
+            Item { width: 1; height: Style.space(2) }
+
+            Text {
+              width: parent.width
+              textFormat: Text.PlainText
+              text: "Support"
+              color: root.foreground
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.subtitle
+              font.bold: true
+            }
+
+            Text {
+              width: parent.width
+              textFormat: Text.PlainText
+              text: "TopStats is free and local-first. If it is useful to you, you can buy me a coffee."
+              color: root.dim
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.caption
+              wrapMode: Text.WordWrap
+            }
+
+            Button {
+              width: parent.width
+              text: "Buy me a coffee"
+              bordered: true
+              foreground: root.foreground
+              accent: root.accent
+              fontFamily: root.fontFamily
+              onClicked: Qt.openUrlExternally(root.coffeeUrl)
+            }
+
             Button {
               text: "Done"
               bordered: true
@@ -746,6 +778,7 @@ Panel {
               }
 
               RoundAction {
+                visible: !root.settingsMode
                 iconText: "\uf0f4"
                 tooltipText: "Buy me a coffee"
                 foreground: root.foreground

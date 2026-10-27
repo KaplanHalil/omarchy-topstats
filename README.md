@@ -161,6 +161,9 @@ If TopStats is useful to you, you can buy me a coffee:
 
 [Buy Me a Coffee](https://buymeacoffee.com/kaplanhalil)
 
+The same link is available in the panel settings (gear icon) and as a footer
+button when the panel is not in settings mode.
+
 ## Credits and license
 
 TopStats is an independent implementation for Omarchy, written as original
