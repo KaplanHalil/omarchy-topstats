@@ -11,7 +11,7 @@ two-minute history chart, top processes, and uptime; NET opens live rates,
 boot totals, and the active interface. The implementation is original
 Omarchy/Quickshell QML.
 
-![TopStats preview](preview.png)
+![TopStats in the Omarchy bar: CPU, GPU, RAM and network meters, with the memory panel open](preview.png)
 
 ## Features
 

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TopStats — marketplace preview</title>
+<style>
+  :root {
+    --bg: #060B1E;
+    --fg: #FFCEAD;
+    --fg-soft: #f6e3d6;
+    --accent: #ED5B5A;
+    --mono: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 1600px;
+    height: 1000px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .stage {
+    position: relative;
+    width: 1600px;
+    height: 1000px;
+    background:
+      radial-gradient(820px 640px at 86% 46%, rgba(255, 206, 173, .17), transparent 64%),
+      radial-gradient(1000px 760px at 8% 4%, rgba(125, 130, 217, .22), transparent 62%),
+      linear-gradient(140deg, #060B1E 0%, #0a1030 48%, #150a28 100%);
+    font-family: var(--mono);
+    color: var(--fg-soft);
+  }
+
+  .wall {
+    position: absolute;
+    inset: -70px;
+    background: url(wallpaper.jpg) center / cover no-repeat;
+    filter: blur(44px) saturate(1.2);
+    opacity: .42;
+    transform: scale(1.08);
+  }
+
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, #060B1E 0%, rgba(6, 11, 30, .94) 32%, rgba(6, 11, 30, .12) 64%, rgba(6, 11, 30, 0) 100%),
+      radial-gradient(130% 120% at 55% 48%, transparent 46%, rgba(3, 6, 18, .80) 100%);
+  }
+
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, .04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(74% 74% at 26% 44%, #000 18%, transparent 76%);
+    opacity: .55;
+  }
+
+  .copy {
+    position: absolute;
+    left: 104px;
+    top: 288px;
+    width: 680px;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .30em;
+    text-transform: uppercase;
+    color: rgba(255, 206, 173, .78);
+  }
+
+  .eyebrow .rule {
+    width: 46px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 206, 173, .85), rgba(255, 206, 173, .15));
+  }
+
+  h1 {
+    margin-top: 28px;
+    font-size: 104px;
+    line-height: .94;
+    font-weight: 800;
+    letter-spacing: -.045em;
+    color: var(--fg);
+    text-shadow: 0 14px 50px rgba(255, 206, 173, .18);
+  }
+
+  .tagline {
+    margin-top: 26px;
+    font-size: 25px;
+    line-height: 1.42;
+    color: #f2dfd2;
+    letter-spacing: -.01em;
+  }
+
+  .features {
+    margin-top: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    font-size: 17px;
+    color: rgba(246, 227, 214, .82);
+  }
+
+  .features li {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    list-style: none;
+  }
+
+  .features b { color: var(--fg); font-weight: 600; }
+
+  .dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px rgba(237, 91, 90, .85);
+    transform: translateY(-2px);
+  }
+
+  .foot {
+    margin-top: 44px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: rgba(255, 206, 173, .52);
+  }
+
+  .foot span:not(:last-child)::after {
+    content: "·";
+    margin: 0 12px;
+    color: rgba(255, 206, 173, .28);
+  }
+
+  .shot {
+    position: absolute;
+    right: 96px;
+    top: 226px;
+    width: 500px;
+  }
+
+  .glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 760px;
+    height: 760px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 206, 173, .20), rgba(125, 130, 217, .12) 40%, transparent 68%);
+    filter: blur(16px);
+  }
+
+  .frame {
+    position: relative;
+    padding: 9px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 206, 173, .26);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02));
+    box-shadow:
+      0 36px 96px rgba(0, 0, 0, .66),
+      0 1px 0 rgba(255, 255, 255, .10) inset,
+      0 0 0 1px rgba(0, 0, 0, .40);
+  }
+
+  .frame img {
+    display: block;
+    width: 480px;
+    height: auto;
+    border-radius: 9px;
+  }
+
+  .rim {
+    position: absolute;
+    left: -1px;
+    top: 26px;
+    width: 1px;
+    height: 280px;
+    background: linear-gradient(180deg, transparent, rgba(255, 206, 173, .55), transparent);
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="wall"></div>
+    <div class="vignette"></div>
+    <div class="grid"></div>
+
+    <section class="copy">
+      <div class="eyebrow"><span class="rule"></span>Omarchy · Bar widget</div>
+      <h1>TopStats</h1>
+      <p class="tagline">CPU, GPU, RAM and network.<br>Live in your bar.</p>
+
+      <ul class="features">
+        <li><span class="dot"></span><span><b>Four meters in one line</b>, no icons to decode</span></li>
+        <li><span class="dot"></span><span>Per-core CPU bars, frequency and temperature</span></li>
+        <li><span class="dot"></span><span><b>Two-minute history</b> and the top applications</span></li>
+        <li><span class="dot"></span><span>NVIDIA and AMD support, <b>no daemon</b></span></li>
+      </ul>
+
+      <div class="foot">
+        <span>Free</span><span>MIT</span><span>No telemetry</span><span>Omarchy 4.x</span>
+      </div>
+    </section>
+
+    <section class="shot">
+      <div class="glow"></div>
+      <div class="frame">
+        <div class="rim"></div>
+        <img src="shot.png" alt="TopStats in the Omarchy bar with the memory panel open">
+      </div>
+    </section>
+  </div>
+</body>
+</html>
