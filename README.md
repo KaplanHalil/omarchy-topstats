@@ -1,7 +1,5 @@
 # TopStats
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-ffdd00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/kaplanhalil)
-
 A native Omarchy bar widget for **CPU, GPU, RAM, and network** with a compact
 Omarchy-native readout and a matching details panel.
 
@@ -154,15 +152,6 @@ qmllint -I "$LINT_ROOT" "$PLUGIN_DIR"/*.qml
 
 The plugin folder must be at the repository root: `manifest.json`,
 `BarWidget.qml`, and `Panel.qml` are loaded directly from it.
-
-## Support
-
-If TopStats is useful to you, you can buy me a coffee:
-
-[Buy Me a Coffee](https://buymeacoffee.com/kaplanhalil)
-
-The same link is available in the panel settings (gear icon) and as a footer
-button when the panel is not in settings mode.
 
 ## Credits and license
 
